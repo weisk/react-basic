@@ -2,7 +2,7 @@
 
 This document is my attempt to formally explain my mental model of React. The intention is to describe this in terms of deductive reasoning that lead us to this design.
 
-There may certainly be some premises that are debatable and the actual design of this example may have bugs and gaps. This is just the beginning of formalizing it. Feel free to send a pull request if you have a better idea of how to formalize it. The progression from simple -> complex should make sense along the way without too much library details shining through.
+There may certainly be some premises that are debatable and the actual design of this example may have bugs and gaps. This is just the beginning of formalizing it. Feel free to send a pull request if you have a better idea of how to formalize it. The progression from simple -> complex should make sense along the way without too many library details shining through.
 
 The actual implementation of React.js is full of pragmatic solutions, incremental steps, algorithmic optimizations, legacy code, debug tooling and things you need to make it actually useful. Those things are more fleeting, can change over time if it is valuable enough and have high enough priority. The actual implementation is much more difficult to reason about.
 
@@ -25,7 +25,7 @@ function NameBox(name) {
 
 ## Abstraction
 
-You can't fit a complex UI in a single function though. It is important that UIs can be abstracted into reusable pieces that doesn't leak their implementation details. Such as calling one function from another.
+You can't fit a complex UI in a single function though. It is important that UIs can be abstracted into reusable pieces that don't leak their implementation details. Such as calling one function from another.
 
 ```js
 function FancyUserBox(user) {
@@ -72,7 +72,7 @@ function UserBox(user) {
 
 ## State
 
-A UI is NOT simply a replication of server / business logic state. There is actually a lot of state that is specific to a specific projection and not others. For example, if you start typing in a text field. That may or may not be replicated to other tabs or to your mobile device. Scroll position is a typical example that you almost never want to replicate across multiple projections.
+A UI is NOT simply a replication of server / business logic state. There is actually a lot of state that is specific to an exact projection and not others. For example, if you start typing in a text field. That may or may not be replicated to other tabs or to your mobile device. Scroll position is a typical example that you almost never want to replicate across multiple projections.
 
 We tend to prefer our data model to be immutable. We thread functions through that can update state as a single atom at the top.
 
@@ -145,7 +145,7 @@ function UserList(users, likesPerUser, updateUserLikes) {
   return users.map(user => FancyNameBox(
     user,
     likesPerUser.get(user.id),
-    () => updateUserLikes(user.id, clicksPerUser.get(user.id) + 1)
+    () => updateUserLikes(user.id, likesPerUser.get(user.id) + 1)
   ));
 }
 
@@ -162,9 +162,9 @@ UserList(data.users, likesPerUser, updateUserLikes);
 
 ## Continuations
 
-Unfortunately, since there are so many list of lists all over the place in UIs, it becomes quite a lot of boilerplate to manage that explicitly.
+Unfortunately, since there are so many lists of lists all over the place in UIs, it becomes quite a lot of boilerplate to manage that explicitly.
 
-We can move some of this boilerplate out of our critical business logic by deferring execution of a function. For example, by using "currying" (`bind` in JavaScript). Then we pass the state through from outside our core functions that are now free of boilerplate.
+We can move some of this boilerplate out of our critical business logic by deferring execution of a function. For example, by using "currying" ([`bind`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/bind) in JavaScript). Then we pass the state through from outside our core functions that are now free of boilerplate.
 
 This isn't reducing boilerplate but is at least moving it out of the critical business logic.
 
@@ -261,9 +261,9 @@ const MemoizedFancyNameBox = memoize(FancyNameBox);
 
 It turns out that it is kind of a PITA to pass every little value you might need through several levels of abstractions. It is kind of nice to sometimes have a shortcut to pass things between two abstractions without involving the intermediates. In React we call this "context".
 
-Sometimes the data dependencies doesn't neatly follow the abstraction tree. For example, in layout algorithms you need to know something about the size of your children before you can completely fulfill their position.
+Sometimes the data dependencies don't neatly follow the abstraction tree. For example, in layout algorithms you need to know something about the size of your children before you can completely fulfill their position.
 
-Now, this example is a bit "out there". I'll use [Algebraic Effects](http://math.andrej.com/eff/) as [proposed for ECMAScript](https://esdiscuss.org/topic/one-shot-delimited-continuations-with-effect-handlers). If you're familiar with functional programming, they avoiding the intermediate ceremony imposed by monads.
+Now, this example is a bit "out there". I'll use [Algebraic Effects](http://math.andrej.com/eff/) as [proposed for ECMAScript](https://esdiscuss.org/topic/one-shot-delimited-continuations-with-effect-handlers). If you're familiar with functional programming, they're avoiding the intermediate ceremony imposed by monads.
 
 ```js
 function ThemeBorderColorRequest() { }
@@ -281,7 +281,7 @@ function BlueTheme(children) {
   return try {
     children();
   } catch effect ThemeBorderColorRequest -> [, continuation] {
-    return continuation('blue');
+    continuation('blue');
   }
 }
 
